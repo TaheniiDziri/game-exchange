@@ -1,0 +1,61 @@
+name: Build and Test React Native App
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout the code from GitHub
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # 2. Set up Node.js environment (adjust the version if necessary)
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16' # Change to the Node.js version your project needs
+
+    # 3. Install project dependencies using npm
+    - name: Install dependencies
+      run: |
+        rm -rf node_modules
+        npm install
+
+    # 4. Install all necessary dependencies for the android project using gradle
+    - name: Install Android dependencies
+      run: |
+        cd android
+        ./gradlew clean
+        ./gradlew dependencies
+
+    # 5. Build the React Native app for Android (APK)
+    - name: Build APK
+      run: |
+        cd android
+        ./gradlew assembleRelease
+
+    # 6. Run unit tests (if you have tests)
+    - name: Run tests
+      run: |
+        npm test
+
+    # 7. Upload the APK as an artifact for downloading
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: game-exchange-apk
+        path: android/app/build/outputs/apk/release/app-release.apk
+
+    # 8. Optionally, deploy the app to Firebase (or another service)
+    # Uncomment this if you want to deploy to Firebase using Firebase CLI (requires setup and authentication)
+    # - name: Deploy to Firebase
+    #   run: |
+    #     firebase deploy --only hosting --token ${{ secrets.FIREBASE_AUTH_TOKEN }}
